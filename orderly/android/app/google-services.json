@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "872844068102",
+    "project_id": "orderly-33eb6",
+    "storage_bucket": "orderly-33eb6.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:872844068102:android:d6d9210452d278a0354a87",
+        "android_client_info": {
+          "package_name": "com.example.orderly"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAREesiD-VOGaUe66g6y1amNCM_evSe-AQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

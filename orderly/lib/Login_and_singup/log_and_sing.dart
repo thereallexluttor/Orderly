@@ -1,4 +1,5 @@
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'dart:async';
@@ -159,17 +160,32 @@ class LogAndSign extends StatelessWidget {
 
                const SizedBox(height: 20),
 
-              const Center(
-                child: Text(
-                  'No tienes cuenta? Registrate aquí 😉',
+              Center(
+                child: RichText(
                   textAlign: TextAlign.left,
-                  style: TextStyle(
-                    color: Color.fromARGB(255, 94, 94, 94),
-                    fontSize: 13,
-                    fontFamily: "Poppins-L"
+                  text: const TextSpan(
+                    style: TextStyle(
+                      color: Color.fromARGB(255, 94, 94, 94),
+                      fontSize: 13,
+                      fontFamily: "Poppins-L"
                   ),
+                  children: [
+                    TextSpan(
+                      text: 'No tienes cuenta?',
+                    ),
+                    TextSpan(
+                      text: 'Registrate aquí',
+                      style: TextStyle(
+                        color: Colors.blue,
+                        fontWeight: FontWeight.bold
+                      ),
+
+                    )
+                  ]
                 ),
               ),
+              ),
+          
 
               const SizedBox(height: 10),
               //forgot password
@@ -198,7 +214,7 @@ class _TextChangingWidgetState extends State<TextChangingWidget> {
   void initState() {
     super.initState();
     // Inicia un temporizador que cambia el texto cada 5 segundos
-    Timer.periodic(const Duration(seconds: 2), (timer) {
+    Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
         _index = (_index + 1) % _textList.length;
       });
