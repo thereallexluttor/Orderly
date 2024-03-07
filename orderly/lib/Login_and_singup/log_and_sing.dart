@@ -1,17 +1,44 @@
 
-import 'package:flutter/cupertino.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
+import 'package:orderly/Login_and_singup/singn_up.dart';
 import 'dart:async';
-
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:orderly/Login_and_singup/my_button.dart';
 import 'package:orderly/Login_and_singup/square_tile.dart';
 
+
+
 class LogAndSign extends StatelessWidget {
-  const LogAndSign({Key? key});
+  LogAndSign({super.key});
+
+  void navigateToRegisterPage(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const RegisterPage()),
+    );
+  }
+  //set email and password vars
+  final  TextEditingController _emailcontroller  = TextEditingController();
+  final  TextEditingController _passwordcontroller = TextEditingController();
+
+  Future signUserIn() async {
+    await FirebaseAuth.instance.signInWithEmailAndPassword(
+      email: _emailcontroller.text.trim(),
+      password: _passwordcontroller.text.trim(),
+       );
+  }
+
+@override
+void dispose() {
+  _emailcontroller.dispose();
+  _passwordcontroller.dispose();
+  //super.dispose();
+}
 
   @override
   Widget build(BuildContext context) {
+    
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -29,7 +56,7 @@ class LogAndSign extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               // Texto que cambia cada 5 segundos
-              TextChangingWidget(),
+              const TextChangingWidget(),
               const Padding(
                 padding:  EdgeInsets.only(left: 22.0),
                 child: Text(
@@ -48,10 +75,11 @@ class LogAndSign extends StatelessWidget {
               
 
               //username
-              const Padding(
-                padding: EdgeInsets.symmetric( horizontal: 25.0),
+               Padding(
+                padding: const EdgeInsets.symmetric( horizontal: 25.0),
                 child: TextField(
-                  decoration: InputDecoration(
+                  controller: _emailcontroller,
+                  decoration: const InputDecoration(
                     enabledBorder: OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.white),
                       borderRadius: BorderRadius.all(Radius.circular(13.0)),
@@ -69,10 +97,11 @@ class LogAndSign extends StatelessWidget {
 
               const SizedBox(height: 10),
 
-              const Padding(
-                padding: EdgeInsets.symmetric( horizontal: 25.0),
+               Padding(
+                padding: const EdgeInsets.symmetric( horizontal: 25.0),
                 child: TextField(
-                  decoration: InputDecoration(
+                  controller: _passwordcontroller,
+                  decoration: const InputDecoration(
                     enabledBorder: OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.white),
                       borderRadius: BorderRadius.all(Radius.circular(10.0)),
@@ -160,30 +189,30 @@ class LogAndSign extends StatelessWidget {
 
                const SizedBox(height: 20),
 
-              Center(
-                child: RichText(
-                  textAlign: TextAlign.left,
-                  text: const TextSpan(
+               Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    'No tienes cuenta?',
                     style: TextStyle(
-                      color: Color.fromARGB(255, 94, 94, 94),
-                      fontSize: 13,
-                      fontFamily: "Poppins-L"
-                  ),
-                  children: [
-                    TextSpan(
-                      text: 'No tienes cuenta?',
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Poppins-L'
                     ),
-                    TextSpan(
-                      text: 'Registrate aquí',
+                  ),
+                  GestureDetector(
+                    onTap:() => showRegisterPage(context),
+                    child: const Text(
+                      ' Registrate aquí.',
                       style: TextStyle(
                         color: Colors.blue,
-                        fontWeight: FontWeight.bold
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Poppins-L'
                       ),
+                    ),
+                  ),
 
-                    )
-                  ]
-                ),
-              ),
+
+                ],
               ),
           
 
@@ -197,11 +226,38 @@ class LogAndSign extends StatelessWidget {
     );
   }
 
-  signUserIn() {
-  }
+  
+
+void showRegisterPage(BuildContext context) {
+  Navigator.push(
+    context,
+    PageRouteBuilder(
+      transitionDuration: const Duration(milliseconds: 130), // Duración de la transición
+      pageBuilder: (_, __, ___) => const RegisterPage(), // Constructor de la página de registro
+      transitionsBuilder: (_, animation, __, child) {
+        // Efecto de desvanecimiento durante la transición
+        return FadeTransition(
+          opacity: animation,
+          child: child,
+        );
+      },
+    ),
+  );
 }
 
+
+
+
+
+   // Agrega la función showRegisterPage aquí
+
+}
+
+
+
 class TextChangingWidget extends StatefulWidget {
+  const TextChangingWidget({super.key});
+
   @override
   _TextChangingWidgetState createState() => _TextChangingWidgetState();
 }
