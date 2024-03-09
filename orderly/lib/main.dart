@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:orderly/Login_and_singup/log_and_sing.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:orderly/main_page/main_page.dart';
 import 'firebase_options.dart';

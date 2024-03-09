@@ -1,11 +1,14 @@
 
-import 'package:firebase_core/firebase_core.dart';
+
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:orderly/Login_and_singup/singn_up.dart';
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:orderly/Login_and_singup/my_button.dart';
-import 'package:orderly/Login_and_singup/square_tile.dart';
+import 'package:orderly/main_page/main_page2.dart';
+
+
 
 
 
@@ -15,7 +18,7 @@ class LogAndSign extends StatelessWidget {
   void navigateToRegisterPage(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const RegisterPage()),
+      MaterialPageRoute(builder: (context) =>  RegisterPage()),
     );
   }
   //set email and password vars
@@ -29,7 +32,7 @@ class LogAndSign extends StatelessWidget {
        );
   }
 
-@override
+
 void dispose() {
   _emailcontroller.dispose();
   _passwordcontroller.dispose();
@@ -174,16 +177,42 @@ void dispose() {
               const SizedBox(height: 10),
 
               //google , apple
-               const Row(
+                Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children:  [
                   // google button
-                  SquareTile(imagePath: 'lib/images/icons/google.png'),
+                  Center(
+                    child: ElevatedButton(
+                      
+                      //imagePath: 'lib/images/icons/google.png',
+                      onPressed:  ()  {
+                        signInWithGoogle();
+                      },
+                       child: 
+                       const Image(image: AssetImage('lib/images/icons/google.png'),
+                       width: 24,
+                       height: 24,
+                       )
 
-                  SizedBox(width: 25),
+                      ),
+                  ),
+
+                  const SizedBox(width: 25),
 
                   // apple button
-                  SquareTile(imagePath: 'lib/images/icons/Apple.png')
+                  Center(
+                    child: ElevatedButton(
+                     // imagePath: 'lib/images/icons/Apple.png',
+                      onPressed: () {
+                       
+                      },
+                      child:const Image(image: AssetImage('lib/images/icons/Apple.png'),
+                       width: 24,
+                       height: 24,
+                       )
+                      
+                       ,),
+                  )
                 ],
               ),
 
@@ -233,7 +262,7 @@ void showRegisterPage(BuildContext context) {
     context,
     PageRouteBuilder(
       transitionDuration: const Duration(milliseconds: 130), // Duración de la transición
-      pageBuilder: (_, __, ___) => const RegisterPage(), // Constructor de la página de registro
+      pageBuilder: (_, __, ___) =>  const MainPage2(), // Constructor de la página de registro
       transitionsBuilder: (_, animation, __, child) {
         // Efecto de desvanecimiento durante la transición
         return FadeTransition(
@@ -245,10 +274,21 @@ void showRegisterPage(BuildContext context) {
   );
 }
 
+  signInWithGoogle() async{
+     GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+
+     GoogleSignInAuthentication? googleAuth =await googleUser?.authentication;
 
 
+    AuthCredential credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth?.accessToken,
+      idToken: googleAuth?.idToken
+    );
 
-
+    UserCredential userCredential =await FirebaseAuth.instance.signInWithCredential(credential);
+    print(userCredential.user?.displayName);
+    
+  }
    // Agrega la función showRegisterPage aquí
 
 }
