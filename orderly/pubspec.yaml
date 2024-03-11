@@ -38,6 +38,14 @@ dependencies:
   firebase_core: ^2.26.0
   firebase_auth: ^4.17.7
   google_sign_in: ^6.2.1
+  sign_in_with_apple: ^6.0.0
+  cloud_firestore: ^4.15.8
+  geolocator: ^11.0.0
+  permission_handler: ^11.3.0
+ 
+  
+
+ 
 
 dev_dependencies:
   flutter_test:
@@ -69,6 +77,8 @@ flutter:
       - lib/images/logos/orderly_icon.png
       - lib/images/icons/Apple.png
       - lib/images/icons/google.png
+      - lib/images/logos/orderly_icon2.png
+      - lib/images/icons/phone.png
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
 

@@ -1,150 +1,71 @@
-
-
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:orderly/Login_and_singup/singn_up.dart';
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:orderly/Login_and_singup/my_button.dart';
-import 'package:orderly/main_page/main_page2.dart';
+import 'package:orderly/main_page/main_page.dart';
 
-
-
-
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class LogAndSign extends StatelessWidget {
   LogAndSign({super.key});
 
-  void navigateToRegisterPage(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) =>  RegisterPage()),
-    );
-  }
-  //set email and password vars
-  final  TextEditingController _emailcontroller  = TextEditingController();
-  final  TextEditingController _passwordcontroller = TextEditingController();
 
+
+  // Controladores para el campo de correo electrónico y contraseña
+  final TextEditingController _emailcontroller = TextEditingController();
+  final TextEditingController _passwordcontroller = TextEditingController();
+
+  // Método para iniciar sesión
   Future signUserIn() async {
     await FirebaseAuth.instance.signInWithEmailAndPassword(
       email: _emailcontroller.text.trim(),
       password: _passwordcontroller.text.trim(),
-       );
+    );
   }
 
-
-void dispose() {
-  _emailcontroller.dispose();
-  _passwordcontroller.dispose();
-  //super.dispose();
-}
+  // Método para liberar recursos cuando el widget se elimina
+  void dispose() {
+    _emailcontroller.dispose();
+    _passwordcontroller.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children:  [
-              const SizedBox(height: 30),
-              const Center(
-                child: 
-                //logo
-                Image(image: AssetImage("lib/images/logos/orderly_icon.png"),
-                height: 200,
-                width: 200,),
+            children: [
+              const SizedBox(height: 10),
+              const Padding(
+                padding:EdgeInsets.all(10.0),
+    
+                  child: Image(
+                    image: AssetImage("lib/images/logos/orderly_icon2.png"),
+                    height: 150,
+                    width: 80,
+                  
+                ),
               ),
-              const SizedBox(height: 20),
-              // Texto que cambia cada 5 segundos
+              const SizedBox(height: 150),
               const TextChangingWidget(),
               const Padding(
-                padding:  EdgeInsets.only(left: 22.0),
+                padding: EdgeInsets.only(left: 22.0),
                 child: Text(
                   'Hoy podrás ordenar, sin filas y muy facil. 😎',
                   textAlign: TextAlign.left,
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: 15,
-                    fontFamily: "Poppins"
+                    fontFamily: "Poppins-L"
                   ),
                 ),
               ),
-
               const SizedBox(height: 43),
-              
-              
-
-              //username
-               Padding(
-                padding: const EdgeInsets.symmetric( horizontal: 25.0),
-                child: TextField(
-                  controller: _emailcontroller,
-                  decoration: const InputDecoration(
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white),
-                      borderRadius: BorderRadius.all(Radius.circular(13.0)),
-                    ),
-                    fillColor: Color(0xFFF5F5F5), //FBFBFB
-                    filled: true,
-                    hintText: 'Correo electronico.',
-                    hintStyle: TextStyle(fontSize: 15, 
-                      color:  Colors.grey,
-                      fontFamily: "Poppins-L"),
-                      contentPadding: EdgeInsets.symmetric(vertical: 5.0, horizontal: 20.0),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 10),
-
-               Padding(
-                padding: const EdgeInsets.symmetric( horizontal: 25.0),
-                child: TextField(
-                  controller: _passwordcontroller,
-                  decoration: const InputDecoration(
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white),
-                      borderRadius: BorderRadius.all(Radius.circular(10.0)),
-                    ),
-                    fillColor: Color(0xFFF5F5F5), //FBFBFB
-                    filled: true,
-                    hintText: 'Contrasena.',
-                    hintStyle: TextStyle(fontSize: 15, 
-                      color:  Colors.grey,
-                      fontFamily: "Poppins-L"),
-                      contentPadding: EdgeInsets.symmetric(vertical: 5.0, horizontal: 20.0),
-                  ),
-                ),
-              ),
-
+              const SizedBox(height: 30),
               const SizedBox(height: 3),
-
-              //SigIn Button
-              MyButton(
-                onTap: signUserIn,
-              ),
-
-
-              Padding( 
-              padding: const EdgeInsets.all(15.0), 
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Text(
-                    'Olvidaste la contrasena?',
-                    style: TextStyle(color: Colors.grey[600],
-                    fontFamily: "Poppins-L")
-                  ),
-                ],
-              )
-            ),
-
-            //o continuar con...
-
-             // or continue with
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 25.0),
                 child: Row(
@@ -158,10 +79,11 @@ void dispose() {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 10.0),
                       child: Text(
-                        'O continuar con:',
-                        style: TextStyle(color: Colors.grey[700],
-                        fontFamily: "Poppins-L"),
-                        
+                        'Ingresa aquí:',
+                        style: TextStyle(
+                          color: Colors.grey[700],
+                          fontFamily: "Poppins-L"
+                        ),
                       ),
                     ),
                     Expanded(
@@ -173,132 +95,171 @@ void dispose() {
                   ],
                 ),
               ),
-
-              const SizedBox(height: 10),
-
-              //google , apple
-                Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children:  [
-                  // google button
-                  Center(
-                    child: ElevatedButton(
-                      
-                      //imagePath: 'lib/images/icons/google.png',
-                      onPressed:  ()  {
-                        signInWithGoogle();
-                      },
-                       child: 
-                       const Image(image: AssetImage('lib/images/icons/google.png'),
-                       width: 24,
-                       height: 24,
-                       )
-
-                      ),
+              const SizedBox(height: 30),
+              Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      signInWithGoogle();
+                    },
+                    // Utiliza un Row para alinear la imagen y el texto horizontalmente
+                    child: const Row(
+                      children: [
+                        // La imagen del botón
+                        Image(
+                          image: AssetImage('lib/images/icons/google.png'),
+                          width: 47, // Ajusta el tamaño según sea necesario
+                          height: 24,
+                        ),
+                        // Agrega un espacio entre la imagen y el texto
+                        
+                        // El texto que deseas agregar al botón
+                        Center(
+                          child: Text(
+                            'Iniciar sesión con Google   ',
+                            style: TextStyle(
+                              // Define el estilo del texto según tus preferencias
+                              fontSize: 16,
+                              color: Colors.black,
+                              fontFamily: "Poppins-L"
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-
-                  const SizedBox(width: 25),
-
-                  // apple button
-                  Center(
-                    child: ElevatedButton(
-                     // imagePath: 'lib/images/icons/Apple.png',
-                      onPressed: () {
-                       
-                      },
-                      child:const Image(image: AssetImage('lib/images/icons/Apple.png'),
-                       width: 24,
-                       height: 24,
-                       )
-                      
-                       ,),
-                  )
                 ],
               ),
-
-               const SizedBox(height: 20),
-
-               Row(
+              const SizedBox(height: 7),
+              Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
-                    'No tienes cuenta?',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Poppins-L'
+                  ElevatedButton(
+                    onPressed: () async {
+                      final credential = await SignInWithApple.getAppleIDCredential(
+                        scopes: [
+                          AppleIDAuthorizationScopes.email,
+                          AppleIDAuthorizationScopes.fullName,
+                        ],
+                      );
+                      // ignore: avoid_print
+                      print(credential);
+                    },
+                    // Utiliza un Row para alinear la imagen y el texto horizontalmente
+                    child: const Row(
+                      children: [
+                        // La imagen del botón
+                        Image(
+                          image: AssetImage('lib/images/icons/Apple.png'),
+                          width: 57, // Ajusta el tamaño según sea necesario
+                          height: 24,
+                        ),
+                        // Agrega un espacio entre la imagen y el texto
+                        
+                        // El texto que deseas agregar al botón
+                        Center(
+                          child: Text(
+                            'Iniciar sesión con Apple    ',
+                            style: TextStyle(
+                              // Define el estilo del texto según tus preferencias
+                              fontSize: 16,
+                              fontFamily: "Poppins-L",
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  GestureDetector(
-                    onTap:() => showRegisterPage(context),
-                    child: const Text(
-                      ' Registrate aquí.',
-                      style: TextStyle(
-                        color: Colors.blue,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Poppins-L'
-                      ),
-                    ),
-                  ),
-
-
                 ],
               ),
-          
-
-              const SizedBox(height: 10),
-              //forgot password
-            
+              const SizedBox(height: 7),
+              Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      signInWithGoogle();
+                    },
+                    style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.white, // Define el color de fondo del botón
+                  ),
+                    // Utiliza un Row para alinear la imagen y el texto horizontalmente
+                    child: const Row(
+                      children: [
+                        // La imagen del botón
+                        Image(
+                          image: AssetImage('lib/images/icons/phone.png'),
+                          width: 57, // Ajusta el tamaño según sea necesario
+                          height: 24,
+                        ),
+                        // Agrega un espacio entre la imagen y el texto
+                       
+                        // El texto que deseas agregar al botón
+                        Center(
+                          child: Text(
+                            'Ingresar con tu móvil        ',
+                            style: TextStyle(
+                              // Define el estilo del texto según tus preferencias
+                              fontSize: 16,
+                              color: Colors.black,
+                              fontFamily: "Poppins-L"
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  )
+              
             ],
           ),
+        ]
         ),
+        
+      ),
+    )
+    );
+  }
+
+  // Método para mostrar la página de registro
+  void showRegisterPage(BuildContext context) {
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 130),
+        pageBuilder: (_, __, ___) => const MainPage(),
+        transitionsBuilder: (_, animation, __, child) {
+          return FadeTransition(
+            opacity: animation,
+            child: child,
+          );
+        },
       ),
     );
   }
 
-  
-
-void showRegisterPage(BuildContext context) {
-  Navigator.push(
-    context,
-    PageRouteBuilder(
-      transitionDuration: const Duration(milliseconds: 130), // Duración de la transición
-      pageBuilder: (_, __, ___) =>  const MainPage2(), // Constructor de la página de registro
-      transitionsBuilder: (_, animation, __, child) {
-        // Efecto de desvanecimiento durante la transición
-        return FadeTransition(
-          opacity: animation,
-          child: child,
-        );
-      },
-    ),
-  );
-}
-
-  signInWithGoogle() async{
-     GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-
-     GoogleSignInAuthentication? googleAuth =await googleUser?.authentication;
-
+  // Método para iniciar sesión con Google
+  signInWithGoogle() async {
+    GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+    GoogleSignInAuthentication? googleAuth = await googleUser?.authentication;
 
     AuthCredential credential = GoogleAuthProvider.credential(
       accessToken: googleAuth?.accessToken,
       idToken: googleAuth?.idToken
     );
 
-    UserCredential userCredential =await FirebaseAuth.instance.signInWithCredential(credential);
+    UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+    // ignore: avoid_print
     print(userCredential.user?.displayName);
-    
   }
-   // Agrega la función showRegisterPage aquí
-
 }
-
-
 
 class TextChangingWidget extends StatefulWidget {
   const TextChangingWidget({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _TextChangingWidgetState createState() => _TextChangingWidgetState();
 }
 
@@ -309,7 +270,6 @@ class _TextChangingWidgetState extends State<TextChangingWidget> {
   @override
   void initState() {
     super.initState();
-    // Inicia un temporizador que cambia el texto cada 5 segundos
     Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
         _index = (_index + 1) % _textList.length;

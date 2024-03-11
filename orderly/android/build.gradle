@@ -1,3 +1,8 @@
+buildscript {
+    ext.kotlin_version = '1.9.21' // Esto es donde se define la versión de Kotlin Gradle plugin
+
+}
+
 allprojects {
     repositories {
         google()

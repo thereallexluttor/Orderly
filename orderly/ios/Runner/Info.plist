@@ -44,6 +44,10 @@
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<key>NSLocationWhenInUseUsageDescription</key>
+<string>Permiso para acceder a la ubicación del dispositivo</string>
+<key>NSLocationAlwaysUsageDescription</key>
+<string>Permiso para acceder a la ubicación del dispositivo</string>
 	<true/>
 </dict>
 </plist>
