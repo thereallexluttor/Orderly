@@ -1,20 +1,23 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geolocator/geolocator.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  const HomePage({Key? key}) : super(key: key);
 
   @override
   _HomePageState createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
+class _HomePageState extends State<HomePage>
+    with SingleTickerProviderStateMixin {
   final user = FirebaseAuth.instance.currentUser!;
   late TabController _tabController;
   late List<QueryDocumentSnapshot> _restaurantesData = [];
   Position? _currentPosition; // Permitimos que _currentPosition sea nulo
+  Timer? _timer;
 
   @override
   void initState() {
@@ -22,10 +25,21 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     _tabController = TabController(length: 2, vsync: this);
     _fetchRestaurantesData();
     _getCurrentLocation();
+    _startTimer();
+  }
+
+  void _startTimer() {
+    _timer = Timer.periodic(Duration(minutes: 2), (timer) {
+      if (_tabController.index == 0) {
+        _fetchRestaurantesData();
+        _getCurrentLocation(); // Actualiza la ubicación cada 2 minutos
+      }
+    });
   }
 
   Future<void> _fetchRestaurantesData() async {
-    final snapshot = await FirebaseFirestore.instance.collection('restaurantes').get();
+    final snapshot =
+        await FirebaseFirestore.instance.collection('restaurantes').get();
     setState(() {
       _restaurantesData = snapshot.docs;
     });
@@ -47,6 +61,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   @override
   void dispose() {
     _tabController.dispose();
+    _timer?.cancel();
     super.dispose();
   }
 
@@ -102,18 +117,37 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                     // Contenido de la pestaña 'Para ti'
                     Column(
                       children: _restaurantesData.map((restauranteDoc) {
+                        final gpsPoint =
+                            restauranteDoc['gps_point'] as GeoPoint?;
+                        double distancia = 0.0;
+
+                        if (gpsPoint != null && _currentPosition != null) {
+                          final distance = Geolocator.distanceBetween(
+                            _currentPosition!.latitude,
+                            _currentPosition!.longitude,
+                            gpsPoint.latitude,
+                            gpsPoint.longitude,
+                          );
+                          distancia = distance / 1000; // Convertir metros a kilómetros
+                        }
+
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 5),
                           child: FutureBuilder<DocumentSnapshot>(
-                            future: restauranteDoc.reference.collection('imagenes').doc('logo').get(),
+                            future: restauranteDoc.reference
+                                .collection('imagenes')
+                                .doc('logo')
+                                .get(),
                             builder: (context, logoSnapshot) {
-                              if (logoSnapshot.connectionState == ConnectionState.waiting) {
-                                return const CircularProgressIndicator();
+                              if (logoSnapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return CircularProgressIndicator();
                               }
 
-                              final logoUrl = logoSnapshot.data!['url'] as String;
+                              final logoUrl =
+                                  logoSnapshot.data!['url'] as String;
                               return Container(
-                                padding: const EdgeInsets.all(10),
+                                padding: EdgeInsets.all(10),
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(20),
                                   boxShadow: [
@@ -131,33 +165,67 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                   children: [
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(20),
-                                      child: Image.network(logoUrl, width: 80, height: 80),
+                                      child: Image.network(
+                                          logoUrl, width: 80, height: 80),
                                     ),
                                     const SizedBox(width: 10),
                                     Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
-                                        const SizedBox(height: 10),
+                                        SizedBox(height: 10),
                                         Text(
                                           '${restauranteDoc['nombre']}',
-                                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, fontFamily: "Poppins-L"),
+                                          style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              fontFamily: "Poppins-L"),
                                         ),
                                         Container(
-                                          constraints: const BoxConstraints(maxWidth: 250),
-                                          child: Text('${restauranteDoc['descripcion']}', style: const TextStyle(fontSize: 8, fontFamily: "Poppins-L")),
+                                          constraints:
+                                              BoxConstraints(maxWidth: 250),
+                                          child: Text(
+                                              '${restauranteDoc['descripcion']}',
+                                              style: const TextStyle(
+                                                  fontSize: 8,
+                                                  fontFamily: "Poppins-L")),
                                         ),
                                         const SizedBox(height: 5),
                                         RichText(
                                           text: TextSpan(
                                             children: [
                                               const TextSpan(
-                                                text: 'Tiempo promedio de entrega: ',
-                                                style: TextStyle(fontSize: 10, fontFamily: "Poppins", color: Colors.black, fontWeight: FontWeight.normal),
+                                                text:
+                                                    'Tiempo promedio de entrega: ',
+                                                style: TextStyle(
+                                                    fontSize: 10,
+                                                    fontFamily: "Poppins",
+                                                    color: Colors.black,
+                                                    fontWeight:
+                                                        FontWeight.normal),
                                               ),
                                               TextSpan(
-                                                text: ' ${restauranteDoc['time_order_mean']} min',
-                                                style: const TextStyle(fontSize: 14, fontFamily: "Poppins", color: Colors.red, fontWeight: FontWeight.bold),
+                                                text:
+                                                    ' ${restauranteDoc['time_order_mean']} min',
+                                                style: const TextStyle(
+                                                    fontSize: 14,
+                                                    fontFamily: "Poppins",
+                                                    color: Colors.red,
+                                                    fontWeight:
+                                                        FontWeight.bold),
                                               ),
+                                              if (gpsPoint != null &&
+                                                  _currentPosition != null)
+                                                TextSpan(
+                                                  text:
+                                                      '\nDistancia: ${distancia.toStringAsFixed(2)} km',
+                                                  style: const TextStyle(
+                                                      fontSize: 10,
+                                                      fontFamily: "Poppins",
+                                                      color: Colors.black,
+                                                      fontWeight:
+                                                          FontWeight.normal),
+                                                ),
                                             ],
                                           ),
                                         )
@@ -176,16 +244,17 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   ],
                 ),
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
               _currentPosition != null
                   ? Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20.0),
                       child: Text(
                         'Ubicación actual: ${_currentPosition!.latitude}, ${_currentPosition!.longitude}',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                     )
-                  : const SizedBox(), // No mostramos nada si la ubicación aún no se ha obtenido
+                  : SizedBox(), // No mostramos nada si la ubicación aún no se ha obtenido
             ],
           ),
         ),
