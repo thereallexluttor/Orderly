@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geolocator/geolocator.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+  const HomePage({super.key});
 
   @override
   _HomePageState createState() => _HomePageState();
@@ -108,12 +108,12 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                             future: restauranteDoc.reference.collection('imagenes').doc('logo').get(),
                             builder: (context, logoSnapshot) {
                               if (logoSnapshot.connectionState == ConnectionState.waiting) {
-                                return CircularProgressIndicator();
+                                return const CircularProgressIndicator();
                               }
 
                               final logoUrl = logoSnapshot.data!['url'] as String;
                               return Container(
-                                padding: EdgeInsets.all(10),
+                                padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(20),
                                   boxShadow: [
@@ -137,13 +137,13 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                     Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        SizedBox(height: 10),
+                                        const SizedBox(height: 10),
                                         Text(
                                           '${restauranteDoc['nombre']}',
                                           style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, fontFamily: "Poppins-L"),
                                         ),
                                         Container(
-                                          constraints: BoxConstraints(maxWidth: 250),
+                                          constraints: const BoxConstraints(maxWidth: 250),
                                           child: Text('${restauranteDoc['descripcion']}', style: const TextStyle(fontSize: 8, fontFamily: "Poppins-L")),
                                         ),
                                         const SizedBox(height: 5),
@@ -176,7 +176,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   ],
                 ),
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               _currentPosition != null
                   ? Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -185,7 +185,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                         style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                     )
-                  : SizedBox(), // No mostramos nada si la ubicación aún no se ha obtenido
+                  : const SizedBox(), // No mostramos nada si la ubicación aún no se ha obtenido
             ],
           ),
         ),
