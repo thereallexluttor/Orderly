@@ -18,6 +18,8 @@ class _HomePageState extends State<HomePage>
   late List<QueryDocumentSnapshot> _restaurantesData = [];
   Position? _currentPosition; // Permitimos que _currentPosition sea nulo
   Timer? _timer;
+  TextEditingController _searchController = TextEditingController();
+  List<QueryDocumentSnapshot> _restaurantesFiltrados = [];
 
   @override
   void initState() {
@@ -42,6 +44,7 @@ class _HomePageState extends State<HomePage>
         await FirebaseFirestore.instance.collection('restaurantes').get();
     setState(() {
       _restaurantesData = snapshot.docs;
+      _restaurantesFiltrados = _restaurantesData; // Inicialmente, muestra todos los restaurantes
     });
   }
 
@@ -57,6 +60,15 @@ class _HomePageState extends State<HomePage>
       // ignore: avoid_print
       print("Error al obtener la ubicación: $e");
     }
+  }
+
+  void _filtrarRestaurantes(String searchText) {
+    setState(() {
+      _restaurantesFiltrados = _restaurantesData.where((restaurante) {
+        final nombre = restaurante['nombre'].toString().toLowerCase();
+        return nombre.contains(searchText.toLowerCase());
+      }).toList();
+    });
   }
 
   @override
@@ -239,7 +251,144 @@ class _HomePageState extends State<HomePage>
                     }).toList(),
                   ),
                   // Contenido de la pestaña 'Buscar'
-                  const Text("Contenido de la pestaña 'Buscar'"),
+                  Column(
+                    children: [
+                      TextField(
+                        controller: _searchController,
+                        onChanged: _filtrarRestaurantes,
+                        decoration: InputDecoration(
+                          hintText: 'Buscar restaurante',
+                          prefixIcon: Icon(Icons.search),
+                        ),
+                      ),
+                      Expanded(
+                        child: ListView(
+                          children: _restaurantesFiltrados.map((restauranteDoc) {
+                            final gpsPoint =
+                                restauranteDoc['gps_point'] as GeoPoint?;
+                            double distancia = 0.0;
+
+                            if (gpsPoint != null && _currentPosition != null) {
+                              final distance = Geolocator.distanceBetween(
+                                _currentPosition!.latitude,
+                                _currentPosition!.longitude,
+                                gpsPoint.latitude,
+                                gpsPoint.longitude,
+                              );
+                              distancia =
+                                  distance / 1000; // Convertir metros a kilómetros
+                            }
+
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 5),
+                              child: FutureBuilder<DocumentSnapshot>(
+                                future: restauranteDoc.reference
+                                    .collection('imagenes')
+                                    .doc('logo')
+                                    .get(),
+                                builder: (context, logoSnapshot) {
+                                  if (logoSnapshot.connectionState ==
+                                      ConnectionState.waiting) {
+                                    return const CircularProgressIndicator();
+                                  }
+
+                                  final logoUrl =
+                                      logoSnapshot.data!['url'] as String;
+                                  return Container(
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(20),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.grey.withOpacity(0.2),
+                                          spreadRadius: 2,
+                                          blurRadius: 5,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ],
+                                      color: Colors.white,
+                                    ),
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(20),
+                                          child: Image.network(logoUrl, width: 80, height: 80),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            const SizedBox(height: 10),
+                                            Text(
+                                              '${restauranteDoc['nombre']}',
+                                              style: const TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontFamily: "Poppins-L"),
+                                            ),
+                                            Container(
+                                              constraints:
+                                                  const BoxConstraints(maxWidth: 250),
+                                              child: Text(
+                                                  '${restauranteDoc['descripcion']}',
+                                                  style: const TextStyle(
+                                                      fontSize: 8,
+                                                      fontFamily: "Poppins-L")),
+                                            ),
+                                            const SizedBox(height: 5),
+                                            RichText(
+                                              text: TextSpan(
+                                                children: [
+                                                  const TextSpan(
+                                                    text:
+                                                        'Tiempo promedio de entrega: ',
+                                                    style: TextStyle(
+                                                        fontSize: 10,
+                                                        fontFamily: "Poppins",
+                                                        color: Colors.black,
+                                                        fontWeight:
+                                                            FontWeight.normal),
+                                                  ),
+                                                  TextSpan(
+                                                    text:
+                                                        ' ${restauranteDoc['time_order_mean']} min',
+                                                    style: const TextStyle(
+                                                        fontSize: 14,
+                                                        fontFamily: "Poppins",
+                                                        color: Colors.red,
+                                                        fontWeight:
+                                                            FontWeight.bold),
+                                                  ),
+                                                  if (gpsPoint != null &&
+                                                      _currentPosition != null)
+                                                    TextSpan(
+                                                      text:
+                                                          '\nDistancia: ${distancia.toStringAsFixed(2)} km',
+                                                      style: const TextStyle(
+                                                          fontSize: 10,
+                                                          fontFamily: "Poppins",
+                                                          color: Colors.black,
+                                                          fontWeight:
+                                                              FontWeight.normal),
+                                                    ),
+                                                ],
+                                              ),
+                                            )
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -258,7 +407,6 @@ class _HomePageState extends State<HomePage>
           notchMargin: 14.0,
           shape: CircularNotchedRectangle(),
           color: Color.fromARGB(0, 0, 0, 0),
-          
           height: 64,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -269,7 +417,7 @@ class _HomePageState extends State<HomePage>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                                        Icon(
+                    Icon(
                       Icons.home,
                       color: Color(0xFFB747EB),
                       size: 20,
@@ -305,3 +453,4 @@ class _HomePageState extends State<HomePage>
     );
   }
 }
+
