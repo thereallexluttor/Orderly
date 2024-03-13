@@ -15,8 +15,8 @@ class _HomePageState extends State<HomePage>
     with SingleTickerProviderStateMixin {
   final user = FirebaseAuth.instance.currentUser!;
   late TabController _tabController;
-  late List<QueryDocumentSnapshot> _restaurantesData = [];
-  Position? _currentPosition; // Permitimos que _currentPosition sea nulo
+  List<QueryDocumentSnapshot> _restaurantesData = [];
+  Position? _currentPosition;
   Timer? _timer;
   TextEditingController _searchController = TextEditingController();
   List<QueryDocumentSnapshot> _restaurantesFiltrados = [];
@@ -25,27 +25,60 @@ class _HomePageState extends State<HomePage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _fetchRestaurantesData();
+    _fetchRestaurantesDataFromCache(); // Intentamos cargar desde caché primero
     _getCurrentLocation();
     _startTimer();
   }
 
   void _startTimer() {
-    _timer = Timer.periodic(Duration(minutes: 10), (timer) {
+    _timer = Timer.periodic(Duration(minutes: 2), (timer) {
       if (_tabController.index == 0) {
         _fetchRestaurantesData();
-        _getCurrentLocation(); // Actualiza la ubicación cada 2 minutos
+        _getCurrentLocation();
       }
     });
+  }
+
+  Future<void> _fetchRestaurantesDataFromCache() async {
+    // Intentamos cargar desde caché primero
+    if (_restaurantesData.isNotEmpty) return;
+    final cachedData = await _getCachedRestaurantesData();
+    if (cachedData.isNotEmpty) {
+      setState(() {
+        _restaurantesData = cachedData;
+        _restaurantesFiltrados = _restaurantesData; // Mostrar datos almacenados en caché
+      });
+    } else {
+      _fetchRestaurantesData(); // Si no hay datos en caché, cargamos desde Firestore
+    }
+  }
+
+  Future<List<QueryDocumentSnapshot>> _getCachedRestaurantesData() async {
+    // Implementación de la obtención de datos desde caché (puedes utilizar Shared Preferences o Hive, por ejemplo)
+    // Aquí un ejemplo simple utilizando SharedPreferences
+    // SharedPreferences prefs = await SharedPreferences.getInstance();
+    // final restaurantesData = prefs.getStringList('restaurantesData') ?? [];
+    // return restaurantesData.map((jsonData) => jsonDecode(jsonData)).toList();
+    return [];
+  }
+
+  void _cacheRestaurantesData(List<QueryDocumentSnapshot> data) {
+    // Implementación del almacenamiento en caché (puedes utilizar Shared Preferences o Hive, por ejemplo)
+    // Aquí un ejemplo simple utilizando SharedPreferences
+    // SharedPreferences prefs = await SharedPreferences.getInstance();
+    // final jsonDataList = data.map((doc) => jsonEncode(doc.data())).toList();
+    // prefs.setStringList('restaurantesData', jsonDataList);
   }
 
   Future<void> _fetchRestaurantesData() async {
     final snapshot =
         await FirebaseFirestore.instance.collection('restaurantes').get();
+    final restaurantesData = snapshot.docs;
     setState(() {
-      _restaurantesData = snapshot.docs;
-      _restaurantesFiltrados = _restaurantesData; // Inicialmente, muestra todos los restaurantes
+      _restaurantesData = restaurantesData;
+      _restaurantesFiltrados = _restaurantesData; // Mostrar datos nuevos desde Firestore
     });
+    _cacheRestaurantesData(restaurantesData); // Almacenar datos en caché para uso futuro
   }
 
   void _getCurrentLocation() async {
@@ -57,7 +90,6 @@ class _HomePageState extends State<HomePage>
         _currentPosition = position;
       });
     } catch (e) {
-      // ignore: avoid_print
       print("Error al obtener la ubicación: $e");
     }
   }
@@ -105,28 +137,19 @@ class _HomePageState extends State<HomePage>
               alignment: Alignment.centerLeft,
               child: TabBar(
                 controller: _tabController,
-                dividerColor: Colors.transparent,
-                splashBorderRadius: BorderRadius.circular(20),
-                splashFactory: NoSplash.splashFactory,
-                indicatorSize: TabBarIndicatorSize.label,
                 tabs: const [
                   Tab(text: "Para ti"),
                   Tab(text: "Buscar"),
                 ],
-                labelStyle: const TextStyle(
-                  fontSize: 13,
-                  fontFamily: "Poppins-L",
-                  fontWeight: FontWeight.bold,
-                ),
               ),
             ),
-            Expanded( // Esta parte se expandirá para llenar el espacio restante
+            Expanded(
               child: TabBarView(
                 controller: _tabController,
                 children: [
                   // Contenido de la pestaña 'Para ti'
                   ListView(
-                    children: _restaurantesData.map((restauranteDoc) {
+                    children: _restaurantesFiltrados.map((restauranteDoc) {
                       final gpsPoint =
                           restauranteDoc['gps_point'] as GeoPoint?;
                       double distancia = 0.0;
@@ -176,8 +199,7 @@ class _HomePageState extends State<HomePage>
                                 children: [
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(20),
-                                    child:
-                                        Image.network(logoUrl, width: 80, height: 80),
+                                    child: Image.network(logoUrl, width: 80, height: 80),
                                   ),
                                   const SizedBox(width: 10),
                                   Column(
@@ -289,7 +311,7 @@ class _HomePageState extends State<HomePage>
                                 builder: (context, logoSnapshot) {
                                   if (logoSnapshot.connectionState ==
                                       ConnectionState.waiting) {
-                                    return const CircularProgressIndicator();
+                                    return SizedBox.shrink(); // Evita renderizar espacio para la animación de carga
                                   }
 
                                   final logoUrl =
@@ -453,4 +475,3 @@ class _HomePageState extends State<HomePage>
     );
   }
 }
-
