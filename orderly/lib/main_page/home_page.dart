@@ -20,6 +20,7 @@ class _HomePageState extends State<HomePage>
   Position? _currentPosition;
   Timer? _timer;
   TextEditingController _searchController = TextEditingController();
+  List<QueryDocumentSnapshot> _restaurantesParaTi = [];
   List<QueryDocumentSnapshot> _restaurantesFiltrados = [];
 
   @override
@@ -47,7 +48,7 @@ class _HomePageState extends State<HomePage>
     if (cachedData.isNotEmpty) {
       setState(() {
         _restaurantesData = cachedData;
-        _restaurantesFiltrados = _restaurantesData; // Mostrar datos almacenados en caché
+        _restaurantesParaTi = _restaurantesData; // Mostrar datos almacenados en caché
       });
     } else {
       _fetchRestaurantesData(); // Si no hay datos en caché, cargamos desde Firestore
@@ -77,7 +78,7 @@ class _HomePageState extends State<HomePage>
     final restaurantesData = snapshot.docs;
     setState(() {
       _restaurantesData = restaurantesData;
-      _restaurantesFiltrados = _restaurantesData; // Mostrar datos nuevos desde Firestore
+      _restaurantesParaTi = _restaurantesData; // Mostrar datos nuevos desde Firestore
     });
     _cacheRestaurantesData(restaurantesData); // Almacenar datos en caché para uso futuro
   }
@@ -97,7 +98,7 @@ class _HomePageState extends State<HomePage>
 
   void _filtrarRestaurantes(String searchText) {
     setState(() {
-      _restaurantesFiltrados = _restaurantesData.where((restaurante) {
+      _restaurantesFiltrados = _restaurantesParaTi.where((restaurante) {
         final nombre = restaurante['nombre'].toString().toLowerCase();
         return nombre.contains(searchText.toLowerCase());
       }).toList();
@@ -149,10 +150,11 @@ class _HomePageState extends State<HomePage>
                 controller: _tabController,
                 children: [
                   // Contenido de la pestaña 'Para ti'
-                  ListView(
-                    children: _restaurantesFiltrados.map((restauranteDoc) {
-                      final gpsPoint =
-                          restauranteDoc['gps_point'] as GeoPoint?;
+                  ListView.builder(
+                    itemCount: _restaurantesParaTi.length,
+                    itemBuilder: (context, index) {
+                      final restauranteDoc = _restaurantesParaTi[index];
+                      final gpsPoint = restauranteDoc['gps_point'] as GeoPoint?;
                       double distancia = 0.0;
 
                       if (gpsPoint != null && _currentPosition != null) {
@@ -162,124 +164,11 @@ class _HomePageState extends State<HomePage>
                           gpsPoint.latitude,
                           gpsPoint.longitude,
                         );
-                        distancia =
-                            distance / 1000; // Convertir metros a kilómetros
+                        distancia = distance / 1000; // Convertir metros a kilómetros
                       }
 
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 5),
-                        child: FutureBuilder<DocumentSnapshot>(
-                          future: restauranteDoc.reference
-                              .collection('imagenes')
-                              .doc('logo')
-                              .get(),
-                          builder: (context, logoSnapshot) {
-                            if (logoSnapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return const CircularProgressIndicator();
-                            }
-
-                            final logoUrl =
-                                logoSnapshot.data!['url'] as String;
-                            return Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.grey.withOpacity(0.2),
-                                    spreadRadius: 2,
-                                    blurRadius: 5,
-                                    offset: const Offset(0, 3),
-                                  ),
-                                ],
-                                color: Colors.white,
-                              ),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(20),
-                                    child: CachedNetworkImage(
-                                      imageUrl: logoUrl,
-                                      width: 80,
-                                      height: 80,
-                                      placeholder: (context, url) =>
-                                          CircularProgressIndicator(),
-                                      errorWidget: (context, url, error) =>
-                                          Icon(Icons.error),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const SizedBox(height: 10),
-                                      Text(
-                                        '${restauranteDoc['nombre']}',
-                                        style: const TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
-                                            fontFamily: "Poppins-L"),
-                                      ),
-                                      Container(
-                                        constraints:
-                                            const BoxConstraints(maxWidth: 250),
-                                        child: Text(
-                                            '${restauranteDoc['descripcion']}',
-                                            style: const TextStyle(
-                                                fontSize: 8,
-                                                fontFamily: "Poppins-L")),
-                                      ),
-                                      const SizedBox(height: 5),
-                                      RichText(
-                                        text: TextSpan(
-                                          children: [
-                                            const TextSpan(
-                                              text:
-                                                  'Tiempo promedio de entrega: ',
-                                              style: TextStyle(
-                                                  fontSize: 10,
-                                                  fontFamily: "Poppins",
-                                                  color: Colors.black,
-                                                  fontWeight:
-                                                      FontWeight.normal),
-                                            ),
-                                            TextSpan(
-                                              text:
-                                                  ' ${restauranteDoc['time_order_mean']} min',
-                                              style: const TextStyle(
-                                                  fontSize: 14,
-                                                  fontFamily: "Poppins",
-                                                  color: Colors.red,
-                                                  fontWeight:
-                                                      FontWeight.bold),
-                                            ),
-                                            if (gpsPoint != null &&
-                                                _currentPosition != null)
-                                              TextSpan(
-                                                text:
-                                                    '\nDistancia: ${distancia.toStringAsFixed(2)} km',
-                                                style: const TextStyle(
-                                                    fontSize: 10,
-                                                    fontFamily: "Poppins",
-                                                    color: Colors.black,
-                                                    fontWeight:
-                                                        FontWeight.normal),
-                                              ),
-                                          ],
-                                        ),
-                                      )
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                    }).toList(),
+                      return _buildRestauranteCard(restauranteDoc, gpsPoint, distancia);
+                    },
                   ),
                   // Contenido de la pestaña 'Buscar'
                   Column(
@@ -293,10 +182,11 @@ class _HomePageState extends State<HomePage>
                         ),
                       ),
                       Expanded(
-                        child: ListView(
-                          children: _restaurantesFiltrados.map((restauranteDoc) {
-                            final gpsPoint =
-                                restauranteDoc['gps_point'] as GeoPoint?;
+                        child: ListView.builder(
+                          itemCount: _restaurantesFiltrados.length,
+                          itemBuilder: (context, index) {
+                            final restauranteDoc = _restaurantesFiltrados[index];
+                            final gpsPoint = restauranteDoc['gps_point'] as GeoPoint?;
                             double distancia = 0.0;
 
                             if (gpsPoint != null && _currentPosition != null) {
@@ -306,124 +196,11 @@ class _HomePageState extends State<HomePage>
                                 gpsPoint.latitude,
                                 gpsPoint.longitude,
                               );
-                              distancia =
-                                  distance / 1000; // Convertir metros a kilómetros
+                              distancia = distance / 1000; // Convertir metros a kilómetros
                             }
 
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 5),
-                              child: FutureBuilder<DocumentSnapshot>(
-                                future: restauranteDoc.reference
-                                    .collection('imagenes')
-                                    .doc('logo')
-                                    .get(),
-                                builder: (context, logoSnapshot) {
-                                  if (logoSnapshot.connectionState ==
-                                      ConnectionState.waiting) {
-                                    return SizedBox.shrink(); // Evita renderizar espacio para la animación de carga
-                                  }
-
-                                  final logoUrl =
-                                      logoSnapshot.data!['url'] as String;
-                                  return Container(
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(20),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.grey.withOpacity(0.2),
-                                          spreadRadius: 2,
-                                          blurRadius: 5,
-                                          offset: const Offset(0, 3),
-                                        ),
-                                      ],
-                                      color: Colors.white,
-                                    ),
-                                    child: Row(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        ClipRRect(
-                                          borderRadius: BorderRadius.circular(20),
-                                          child: CachedNetworkImage(
-                                            imageUrl: logoUrl,
-                                            width: 80,
-                                            height: 80,
-                                            placeholder: (context, url) =>
-                                                CircularProgressIndicator(),
-                                            errorWidget: (context, url, error) =>
-                                                Icon(Icons.error),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            const SizedBox(height: 10),
-                                            Text(
-                                              '${restauranteDoc['nombre']}',
-                                              style: const TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.bold,
-                                                  fontFamily: "Poppins-L"),
-                                            ),
-                                            Container(
-                                              constraints:
-                                                  const BoxConstraints(maxWidth: 250),
-                                              child: Text(
-                                                  '${restauranteDoc['descripcion']}',
-                                                  style: const TextStyle(
-                                                      fontSize: 8,
-                                                      fontFamily: "Poppins-L")),
-                                            ),
-                                            const SizedBox(height: 5),
-                                            RichText(
-                                              text: TextSpan(
-                                                children: [
-                                                  const TextSpan(
-                                                    text:
-                                                        'Tiempo promedio de entrega: ',
-                                                    style: TextStyle(
-                                                        fontSize: 10,
-                                                        fontFamily: "Poppins",
-                                                        color: Colors.black,
-                                                        fontWeight:
-                                                            FontWeight.normal),
-                                                  ),
-                                                  TextSpan(
-                                                    text:
-                                                        ' ${restauranteDoc['time_order_mean']} min',
-                                                    style: const TextStyle(
-                                                        fontSize: 14,
-                                                        fontFamily: "Poppins",
-                                                        color: Colors.red,
-                                                        fontWeight:
-                                                            FontWeight.bold),
-                                                  ),
-                                                  if (gpsPoint != null &&
-                                                      _currentPosition != null)
-                                                    TextSpan(
-                                                      text:
-                                                          '\nDistancia: ${distancia.toStringAsFixed(2)} km',
-                                                      style: const TextStyle(
-                                                          fontSize: 10,
-                                                          fontFamily: "Poppins",
-                                                          color: Colors.black,
-                                                          fontWeight:
-                                                              FontWeight.normal),
-                                                    ),
-                                                ],
-                                              ),
-                                            )
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
-                            );
-                          }).toList(),
+                            return _buildRestauranteCard(restauranteDoc, gpsPoint, distancia);
+                          },
                         ),
                       ),
                     ],
@@ -437,7 +214,7 @@ class _HomePageState extends State<HomePage>
         floatingActionButton: FloatingActionButton(
           onPressed: () {},
           backgroundColor: const Color.fromARGB(250, 255, 255, 255),
-          foregroundColor:  const Color(0xFFB747EB),
+          foregroundColor: const Color(0xFFB747EB),
           elevation: 9,
           shape: const CircleBorder(eccentricity: 0.5),
           child: const Icon(Icons.qr_code),
@@ -491,5 +268,86 @@ class _HomePageState extends State<HomePage>
       ),
     );
   }
-}
 
+  Widget _buildRestauranteCard(QueryDocumentSnapshot restauranteDoc, GeoPoint? gpsPoint, double distancia) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 5),
+      child: FutureBuilder<DocumentSnapshot>(
+        future: restauranteDoc.reference.collection('imagenes').doc('logo').get(),
+        builder: (context, logoSnapshot) {
+          if (logoSnapshot.connectionState == ConnectionState.waiting) {
+            return SizedBox.shrink(); // Evita renderizar espacio para la animación de carga
+          }
+
+          final logoUrl = logoSnapshot.data!['url'] as String;
+          return Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.2),
+                  spreadRadius: 2,
+                  blurRadius: 5,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+              color: Colors.white,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: CachedNetworkImage(
+                    imageUrl: logoUrl,
+                    width: 80,
+                    height: 80,
+                    placeholder: (context, url) => SizedBox.shrink(),
+                    errorWidget: (context, url, error) => Icon(Icons.error),
+                    fadeInDuration: Duration.zero, // Sin animación de carga
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 10),
+                    Text(
+                      '${restauranteDoc['nombre']}',
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, fontFamily: "Poppins-L"),
+                    ),
+                    Container(
+                      constraints: const BoxConstraints(maxWidth: 250),
+                      child: Text('${restauranteDoc['descripcion']}', style: const TextStyle(fontSize: 8, fontFamily: "Poppins-L")),
+                    ),
+                    const SizedBox(height: 5),
+                    RichText(
+                      text: TextSpan(
+                        children: [
+                          const TextSpan(
+                            text: 'Tiempo promedio de entrega: ',
+                            style: TextStyle(fontSize: 10, fontFamily: "Poppins", color: Colors.black, fontWeight: FontWeight.normal),
+                          ),
+                          TextSpan(
+                            text: ' ${restauranteDoc['time_order_mean']} min',
+                            style: const TextStyle(fontSize: 14, fontFamily: "Poppins", color: Colors.red, fontWeight: FontWeight.bold),
+                          ),
+                          if (gpsPoint != null && _currentPosition != null)
+                            TextSpan(
+                              text: '\nDistancia: ${distancia.toStringAsFixed(2)} km',
+                              style: const TextStyle(fontSize: 10, fontFamily: "Poppins", color: Colors.black, fontWeight: FontWeight.normal),
+                            ),
+                        ],
+                      ),
+                    )
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
