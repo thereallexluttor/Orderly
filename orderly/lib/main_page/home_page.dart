@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -199,7 +200,15 @@ class _HomePageState extends State<HomePage>
                                 children: [
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(20),
-                                    child: Image.network(logoUrl, width: 80, height: 80),
+                                    child: CachedNetworkImage(
+                                      imageUrl: logoUrl,
+                                      width: 80,
+                                      height: 80,
+                                      placeholder: (context, url) =>
+                                          CircularProgressIndicator(),
+                                      errorWidget: (context, url, error) =>
+                                          Icon(Icons.error),
+                                    ),
                                   ),
                                   const SizedBox(width: 10),
                                   Column(
@@ -335,7 +344,15 @@ class _HomePageState extends State<HomePage>
                                       children: [
                                         ClipRRect(
                                           borderRadius: BorderRadius.circular(20),
-                                          child: Image.network(logoUrl, width: 80, height: 80),
+                                          child: CachedNetworkImage(
+                                            imageUrl: logoUrl,
+                                            width: 80,
+                                            height: 80,
+                                            placeholder: (context, url) =>
+                                                CircularProgressIndicator(),
+                                            errorWidget: (context, url, error) =>
+                                                Icon(Icons.error),
+                                          ),
                                         ),
                                         const SizedBox(width: 10),
                                         Column(
@@ -475,3 +492,4 @@ class _HomePageState extends State<HomePage>
     );
   }
 }
+
