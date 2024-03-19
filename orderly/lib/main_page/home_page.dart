@@ -1,20 +1,23 @@
 import 'dart:async';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/widgets.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:carousel_slider/carousel_slider.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  const HomePage({Key? key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _HomePageState createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage>
-    with SingleTickerProviderStateMixin {
+class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
   final user = FirebaseAuth.instance.currentUser!;
   late TabController _tabController;
   List<QueryDocumentSnapshot> _restaurantesData = [];
@@ -23,21 +26,31 @@ class _HomePageState extends State<HomePage>
   final TextEditingController _searchController = TextEditingController();
   List<QueryDocumentSnapshot> _restaurantesParaTi = [];
   List<QueryDocumentSnapshot> _restaurantesFiltrados = [];
-  List <QueryDocumentSnapshot> _restaurantesOfertas = [];
+  List<QueryDocumentSnapshot> _restaurantesOfertas = [];
   final ScrollController _scrollController = ScrollController();
   final bool _scrollEnabled = false;
+  int _selectedButtonIndex = -1;
+  final List<String> _sliderImages = [
+    "https://firebasestorage.googleapis.com/v0/b/orderly-33eb6.appspot.com/o/1.png?alt=media&token=0b010f6f-1709-4837-a852-199f0cd08a20",
+    "https://firebasestorage.googleapis.com/v0/b/orderly-33eb6.appspot.com/o/2.png?alt=media&token=e5087d6e-f3e4-4a69-a9ac-ad7105b04e9a",
+    "https://firebasestorage.googleapis.com/v0/b/orderly-33eb6.appspot.com/o/3.png?alt=media&token=524372db-78a1-4f4d-aaf8-5566ca76cbee",
+    'https://firebasestorage.googleapis.com/v0/b/orderly-33eb6.appspot.com/o/4.png?alt=media&token=5de7a562-8f6d-4732-930f-fe780b465cda',
+  ];
+
+  int _currentSliderIndex = 0;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _fetchRestaurantesDataFromCache(); // Intentamos cargar desde caché primero
+    _fetchRestaurantesDataFromCache();
     _getCurrentLocation();
     _startTimer();
+    //_selectedButtonIndex = 0; //botonescomida
   }
 
   void _startTimer() {
-    _timer = Timer.periodic(const Duration(minutes: 2), (timer) {
+    _timer = Timer.periodic(const Duration(minutes: 20), (timer) {
       if (_tabController.index == 0) {
         _fetchRestaurantesData();
         _getCurrentLocation();
@@ -46,47 +59,36 @@ class _HomePageState extends State<HomePage>
   }
 
   Future<void> _fetchRestaurantesDataFromCache() async {
-    // Intentamos cargar desde caché primero
     if (_restaurantesData.isNotEmpty) return;
     final cachedData = await _getCachedRestaurantesData();
     if (cachedData.isNotEmpty) {
       setState(() {
         _restaurantesData = cachedData;
         _restaurantesParaTi = _restaurantesData;
-        _restaurantesOfertas = _restaurantesData; // Mostrar datos almacenados en caché
+        _restaurantesOfertas = _restaurantesData;
       });
     } else {
-      _fetchRestaurantesData(); // Si no hay datos en caché, cargamos desde Firestore
+      _fetchRestaurantesData();
     }
   }
 
   Future<List<QueryDocumentSnapshot>> _getCachedRestaurantesData() async {
-    // Implementación de la obtención de datos desde caché (puedes utilizar Shared Preferences o Hive, por ejemplo)
-    // Aquí un ejemplo simple utilizando SharedPreferences
-    // SharedPreferences prefs = await SharedPreferences.getInstance();
-    // final restaurantesData = prefs.getStringList('restaurantesData') ?? [];
-    // return restaurantesData.map((jsonData) => jsonDecode(jsonData)).toList();
     return [];
   }
 
   void _cacheRestaurantesData(List<QueryDocumentSnapshot> data) {
-    // Implementación del almacenamiento en caché (puedes utilizar Shared Preferences o Hive, por ejemplo)
-    // Aquí un ejemplo simple utilizando SharedPreferences
-    // SharedPreferences prefs = await SharedPreferences.getInstance();
-    // final jsonDataList = data.map((doc) => jsonEncode(doc.data())).toList();
-    // prefs.setStringList('restaurantesData', jsonDataList);
+    // Implementación del almacenamiento en caché
   }
 
   Future<void> _fetchRestaurantesData() async {
-    final snapshot =
-        await FirebaseFirestore.instance.collection('restaurantes').get();
+    final snapshot = await FirebaseFirestore.instance.collection('restaurantes').get();
     final restaurantesData = snapshot.docs;
     setState(() {
       _restaurantesData = restaurantesData;
       _restaurantesParaTi = _restaurantesData;
-      _restaurantesOfertas = _restaurantesData; // Mostrar datos nuevos desde Firestore
+      _restaurantesOfertas = _restaurantesData;
     });
-    _cacheRestaurantesData(restaurantesData); // Almacenar datos en caché para uso futuro
+    _cacheRestaurantesData(restaurantesData);
   }
 
   void _getCurrentLocation() async {
@@ -98,7 +100,6 @@ class _HomePageState extends State<HomePage>
         _currentPosition = position;
       });
     } catch (e) {
-      // ignore: avoid_print
       print("Error al obtener la ubicación: $e");
     }
   }
@@ -131,289 +132,326 @@ class _HomePageState extends State<HomePage>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 100),
+              const SizedBox(height: 50),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Center(
+                    child: SizedBox(
+                      width: 350,
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: _filtrarRestaurantes,
+                        decoration: const InputDecoration(
+                          contentPadding: EdgeInsets.symmetric(vertical: 7.0, horizontal: 50.0),
+                          hintText: 'Busca tu restaurante favorito!',
+                          prefixIcon: Icon(Icons.search),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                          ),
+                          hintStyle: TextStyle(
+                            fontFamily: 'Poppins-L',
+                            fontSize: 14,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  SizedBox(
+                    height: 30,
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 0.0),
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        children: [
+                          const SizedBox(width: 20),
+                          _buildButton(0, '🍔'),
+                          const SizedBox(width: 8),
+                          _buildButton(1, '🍕'),
+                          const SizedBox(width: 8),
+                          _buildButton(2, '🌮'),
+                          const SizedBox(width: 8),
+                          _buildButton(3, '🍗'),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  
+                  CarouselSlider(
+                    options: CarouselOptions(
+                      autoPlay: true,
+                      height: 200,
+                      autoPlayCurve: Curves.fastOutSlowIn,
+                      autoPlayAnimationDuration: const Duration(milliseconds: 800),
+                      autoPlayInterval: const Duration(seconds: 4),
+                      enlargeCenterPage: true,
+                      aspectRatio: 10.0,
+                    ),
+                    items: _sliderImages.map((imageUrl) {
+                      return Builder(
+                        builder: (BuildContext context) {
+                          return CachedNetworkImage(
+                            imageUrl: imageUrl,
+                            placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
+                            errorWidget: (context, url, error) => const Icon(Icons.error),
+                            fit: BoxFit.scaleDown,
+                          );
+                        },
+                      );
+                    }).toList(),
+                  ),
+                  AnimatedSmoothIndicator(
+                    activeIndex: _currentSliderIndex,
+                    count: _sliderImages.length,
+                    effect: const WormEffect(
+                      dotHeight: 15,
+                      dotWidth: 8,
+                      spacing: 1,
+                      dotColor: Colors.white,
+                      activeDotColor:  Colors.white
+                    ),
+                  ),
+                ],
+              ),
+              
               const Padding(
                 padding: EdgeInsets.only(left: 10.0),
                 child: Text(
-                  'Deliciosa comida,\nrápida y sin filas! 😎',
+                  'Restaurantes cercanos',
                   textAlign: TextAlign.left,
                   style: TextStyle(
                     color: Colors.black,
-                    fontSize: 20,
+                    fontSize: 15,
                     fontFamily: "Poppins-L",
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.normal,
                   ),
                 ),
               ),
-              const SizedBox(height: 35),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TabBar(
-                  controller: _tabController,
-                  tabs: const [
-                    Tab(text: "Para ti"),
-                    Tab(text: "Buscar"),
-                  ],
+              const SizedBox(height: 8),
+
+              Center(
+               
+                  child: Container(
+                    height: MediaQuery.of(context).size.height - MediaQuery.of(context).size.height/1.15,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal, // Establecer el desplazamiento horizontal
+                      itemCount: _restaurantesParaTi.length,
+                      itemBuilder: (context, index) {
+                        final restauranteDoc = _restaurantesParaTi[index];
+                        final gpsPoint = restauranteDoc['gps_point'] as GeoPoint?;
+                        double distancia = 0.0;
+                
+                        if (gpsPoint != null && _currentPosition != null) {
+                          final distance = Geolocator.distanceBetween(
+                            _currentPosition!.latitude,
+                            _currentPosition!.longitude,
+                            gpsPoint.latitude,
+                            gpsPoint.longitude,
+                          );
+                          distancia = distance / 1000; // Convertir metros a kilómetros
+                        }
+                
+                        return Container(
+                          constraints: BoxConstraints(maxHeight: 20), // Establecer una altura máxima
+                          child: _buildRestauranteCard(restauranteDoc, gpsPoint, distancia),
+                        );
+                      },
+                    ),
+                  ),
+                
+              ),
+
+              const SizedBox(height: 15),
+              Visibility(
+                visible: _searchController.text.isEmpty,
+                child: Center(
+                child: Image.asset("lib/images/animations/Animation.gif",
+                width: 300,
+                height: 200,
+                isAntiAlias: true,
+                filterQuality: FilterQuality.high,
+                )
+                
                 ),
               ),
-              SizedBox(
-                height: MediaQuery.of(context).size.height - MediaQuery.of(context).size.height/2.5 ,//MediaQuery.of(context).size.height/5  - MediaQuery.of(context).size.height/4.5, //distancia de la bottombar 360
-                child: Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
+
+
+              Visibility(
+                 visible: _searchController.text.isNotEmpty,
+                child: const Padding(
+                  padding: EdgeInsets.only(left: 10.0),
+                  child: Text(
+                    'Tu busqueda',
+                    textAlign: TextAlign.left,
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 15,
+                      fontFamily: "Poppins-L",
+                      fontWeight: FontWeight.normal,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 15),
+
+              Center(
+  child: Visibility(
+    visible: _searchController.text.isNotEmpty,
+    child: Container(
+      height: MediaQuery.of(context).size.height - MediaQuery.of(context).size.height/1.15,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal, // Establecer el desplazamiento horizontal
+        shrinkWrap: true,
+        itemCount: _restaurantesFiltrados.length,
+        itemBuilder: (context, index) {
+          final restauranteDoc = _restaurantesFiltrados[index];
+          final gpsPoint = restauranteDoc['gps_point'] as GeoPoint?;
+          double distancia = 0.0;
+          
+          if (gpsPoint != null && _currentPosition != null) {
+            final distance = Geolocator.distanceBetween(
+              _currentPosition!.latitude,
+              _currentPosition!.longitude,
+              gpsPoint.latitude,
+              gpsPoint.longitude,
+            );
+            distancia = distance / 1000; // Convertir metros a kilómetros
+          }
+          
+          return Container(
+            constraints: BoxConstraints(maxHeight: 20), // Establecer una altura máxima
+            child: _buildRestauranteCard(restauranteDoc, gpsPoint, distancia),
+          );
+        },
+      ),
+    ),
+  ),
+),
+            ],
+          ),
+        ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        floatingActionButton: Container(
+          margin: const EdgeInsets.only(top: 0.0),
+          child: FloatingActionButton(
+            onPressed: () {
+              //QR-button
+            },
+            backgroundColor: const Color.fromARGB(250, 255, 255, 255),
+            foregroundColor: const Color(0xFFB747EB),
+            elevation: 7,
+            shape: const CircleBorder(eccentricity: 0.5),
+            child: const Icon(Icons.qr_code),
+          ),
+        ),
+        bottomNavigationBar: BottomAppBar(
+          notchMargin: 7.0,
+          shape: const CircularNotchedRectangle(),
+          color: const Color.fromARGB(255, 255, 255, 255),
+          height: 34,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(left: 0.0),
+                child: InkWell(
+                  onTap: () {
+                    _scrollController.animateTo(
+                      0.0,
+                      duration: const Duration(milliseconds: 500),
+                      curve: Curves.ease,
+                    );
+                  },
+                  child: const Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Contenido de la pestaña 'Para ti'
-                      ListView.builder(
-                        itemCount: _restaurantesParaTi.length,
-                        itemBuilder: (context, index) {
-                          final restauranteDoc = _restaurantesParaTi[index];
-                          final gpsPoint =
-                              restauranteDoc['gps_point'] as GeoPoint?;
-                          double distancia = 0.0;
-
-                          if (gpsPoint != null && _currentPosition != null) {
-                            final distance = Geolocator.distanceBetween(
-                              _currentPosition!.latitude,
-                              _currentPosition!.longitude,
-                              gpsPoint.latitude,
-                              gpsPoint.longitude,
-                            );
-                            distancia =
-                                distance / 1000; // Convertir metros a kilómetros
-                          }
-
-                          return _buildRestauranteCard(
-                              restauranteDoc, gpsPoint, distancia);
-                        },
-                      ),
-                      // Contenido de la pestaña 'Buscar'
-                      Column(
-                        children: [
-                          TextField(
-                            controller: _searchController,
-                            onChanged: _filtrarRestaurantes,
-                            decoration: const InputDecoration(
-                              hintText: 'Buscar restaurante',
-                              prefixIcon: Icon(Icons.search),
-                            ),
-                          ),
-                          Expanded(
-                            child: ListView.builder(
-                              itemCount: _restaurantesFiltrados.length,
-                              itemBuilder: (context, index) {
-                                final restauranteDoc =
-                                    _restaurantesFiltrados[index];
-                                final gpsPoint =
-                                    restauranteDoc['gps_point'] as GeoPoint?;
-                                double distancia = 0.0;
-
-                                if (gpsPoint != null &&
-                                    _currentPosition != null) {
-                                  final distance = Geolocator.distanceBetween(
-                                    _currentPosition!.latitude,
-                                    _currentPosition!.longitude,
-                                    gpsPoint.latitude,
-                                    gpsPoint.longitude,
-                                  );
-                                  distancia =
-                                      distance / 1000; // Convertir metros a kilómetros
-                                }
-
-                                return _buildRestauranteCard(
-                                    restauranteDoc, gpsPoint, distancia);
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
+                      
                     ],
                   ),
                 ),
               ),
-              const SizedBox(
-                height: 80//MediaQuery.of(context).size.height/2 
-                //tenia un valor restado -320
+              Padding(
+                padding: const EdgeInsets.only(right: 0.0),
+                child: InkWell(
+                  onTap: () {
+                    _scrollController.animateTo(
+                      _scrollController.position.maxScrollExtent,
+                      duration: const Duration(milliseconds: 500),
+                      curve: Curves.ease,
+                    );
+                  },
+                  child: const Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                     
+                      
+                    ],
+                  ),
+                ),
               ),
-               SizedBox(
-  height: MediaQuery.of(context).size.height - MediaQuery.of(context).size.height/5 , // Altura ajustable según sea necesario
-  child: SizedBox(
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-       const Padding(
-          padding: EdgeInsets.all(15.0),
-          child: Text(
-            'Estos son los productos en oferta hoy! 😜',
-            textAlign: TextAlign.left,
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: 17,
-              fontFamily: "Poppins-L",
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        Expanded(
-          child: ListView.builder(
-            itemCount: _restaurantesParaTi.length,
-            itemBuilder: (context, index) {
-              final restauranteDoc = _restaurantesParaTi[index];
-              final gpsPoint = restauranteDoc['gps_point'] as GeoPoint?;
-              double distancia = 0.0;
-
-              if (gpsPoint != null && _currentPosition != null) {
-                final distance = Geolocator.distanceBetween(
-                  _currentPosition!.latitude,
-                  _currentPosition!.longitude,
-                  gpsPoint.latitude,
-                  gpsPoint.longitude,
-                );
-                distancia = distance / 1000; // Convertir metros a kilómetros
-              }
-
-              return _buildRestauranteCard(
-                  restauranteDoc, gpsPoint, distancia);
-            },
-          ),
-        ),
-      ],
-    ),
-  ),
-),
-
-
-            ],
-          ),
-          
-        ),
-
-
-        
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-floatingActionButton: Container(
-  margin: EdgeInsets.only(top: 50.0), // Ajusta el margen inferior según sea necesario
-  child: FloatingActionButton(
-    onPressed: () {
-      if (_tabController.index == 1) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.ease,
-        );
-      } else {
-        _scrollController.animateTo(
-          8.0,
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.ease,
-        );
-      }
-    },
-    backgroundColor: const Color.fromARGB(250, 255, 255, 255),
-    foregroundColor: const Color(0xFFB747EB),
-    elevation: 10,
-    shape: const CircleBorder(eccentricity: 0.5),
-    child: const Icon(Icons.qr_code),
-  ),
-),
-bottomNavigationBar: BottomAppBar(
-  notchMargin: 3.0,
-  shape: const CircularNotchedRectangle(),
-   color: Color.fromARGB(255, 255, 255, 255),
-  
-  height: 64, // Tamaño de la bottombar
-  child: Row(
-    mainAxisAlignment: MainAxisAlignment.spaceAround,
-    mainAxisSize: MainAxisSize.max,
-    children: [
-      Padding(
-        padding: const EdgeInsets.only(left: 0.0),
-        child: InkWell(
-          onTap: () {
-            _scrollController.animateTo(
-              0.0,
-              duration: const Duration(milliseconds: 500),
-              curve: Curves.ease,
-            );
-          },
-          child: const Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.home,
-                color: Color(0xFFB747EB),
-                size: 20,
-              ),
-              Text(
-                "Home",
-                style: TextStyle(
-                    color: Color.fromARGB(255, 0, 0, 0), fontSize: 10),
-              )
             ],
           ),
         ),
-      ),
-      Padding(
-        padding: const EdgeInsets.only(right: 0.0),
-        child: InkWell(
-          onTap: () {
-            _scrollController.animateTo(
-              _scrollController.position.maxScrollExtent,
-              duration: const Duration(milliseconds: 500),
-              curve: Curves.ease,
-            );
-          },
-          child: const Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.discount,
-                color: Color(0xFFB747EB),
-                size: 20,
-              ),
-              Text(
-                "Ofertas",
-                style: TextStyle(
-                    color: Color.fromARGB(255, 0, 0, 0),
-                    fontSize: 9,
-                    fontFamily: "Poppins"),
-              )
-            ],
-          ),
-        ),
-      ),
-    ],
-  ),
-),
-
       ),
     );
   }
 
-  Widget _buildRestauranteCard(
-      QueryDocumentSnapshot restauranteDoc, GeoPoint? gpsPoint, double distancia) {
+  Widget _buildButton(int index, String text) {
+    bool isSelected = index == _selectedButtonIndex;
+    return ElevatedButton(
+      onPressed: () {
+        setState(() {
+          _selectedButtonIndex = index;
+        });
+      },
+      style: ElevatedButton.styleFrom(
+        fixedSize: const Size(80, 30),
+        elevation: 1,
+        side: const BorderSide(color: Color.fromARGB(255, 236, 236, 236)),
+        backgroundColor: isSelected ? Color.fromARGB(255, 205, 117, 249) : Colors.white,
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 20,
+          color: isSelected ? Colors.white : const Color.fromARGB(255, 213, 213, 213),
+          fontFamily: "Poppins-L",
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRestauranteCard(QueryDocumentSnapshot restauranteDoc, GeoPoint? gpsPoint, double distancia) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 5),
+      padding: const EdgeInsets.only(bottom: 10, left: 10),
       child: FutureBuilder<DocumentSnapshot>(
         future: restauranteDoc.reference.collection('imagenes').doc('logo').get(),
         builder: (context, logoSnapshot) {
           if (logoSnapshot.connectionState == ConnectionState.waiting) {
-            return const SizedBox.shrink(); // Evita renderizar espacio para la animación de carga
+            return const SizedBox.shrink();
           }
 
           final logoUrl = logoSnapshot.data!['url'] as String;
           return Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(10),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.grey.withOpacity(0.2),
-                  spreadRadius: 2,
-                  blurRadius: 5,
-                  offset: const Offset(0, 3),
+                  color: Colors.grey.withOpacity(0.5),
+                  spreadRadius: 0.5,
+                  blurRadius: 3,
+                  offset: const Offset(0,7),
                 ),
               ],
               color: Colors.white,
+              border: Border.all(color: const Color.fromARGB(255, 229, 229, 229), width: 1),
+              
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -426,10 +464,11 @@ bottomNavigationBar: BottomAppBar(
                     height: 80,
                     placeholder: (context, url) => const SizedBox.shrink(),
                     errorWidget: (context, url, error) => const Icon(Icons.error),
-                    fadeInDuration: Duration.zero, // Sin animación de carga
+                    fadeInDuration: Duration.zero,
                   ),
                 ),
                 const SizedBox(width: 5),
+
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -442,7 +481,7 @@ bottomNavigationBar: BottomAppBar(
                           fontFamily: "Poppins-L"),
                     ),
                     Container(
-                      constraints: const BoxConstraints(maxWidth: 250),
+                      constraints: const BoxConstraints(maxWidth: 200),
                       child: Text(
                           '${restauranteDoc['descripcion']}',
                           style: const TextStyle(
@@ -491,3 +530,4 @@ bottomNavigationBar: BottomAppBar(
     );
   }
 }
+

@@ -3,6 +3,8 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:orderly/main_page/main_page.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:lottie/lottie.dart';
 
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
@@ -38,18 +40,18 @@ class LogAndSign extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 10),
-              const Padding(
-                padding:EdgeInsets.all(10.0),
-    
-                  child: Image(
-                    image: AssetImage("lib/images/logos/orderly_icon2.png"),
-                    height: 150,
-                    width: 80,
-                  
-                ),
+              
+              const SizedBox(height: 100),
+              const Center(
+                     child: Image(
+                      image: AssetImage("lib/images/logos/orderly_icon.png"),
+                      height: 200,
+                      width: 200,
+                    ),
               ),
-              const SizedBox(height: 150),
+              
+
+              const SizedBox(height: 100),
               const TextChangingWidget(),
               const Padding(
                 padding: EdgeInsets.only(left: 22.0),
@@ -103,6 +105,12 @@ class LogAndSign extends StatelessWidget {
                     onPressed: () {
                       signInWithGoogle();
                     },
+                    style: ElevatedButton.styleFrom(
+                      fixedSize: const Size(260, 30),
+                      elevation: 0 , 
+                      side: const BorderSide(color: Colors.black),
+                      
+                    ),
                     // Utiliza un Row para alinear la imagen y el texto horizontalmente
                     child: const Row(
                       children: [
@@ -110,17 +118,18 @@ class LogAndSign extends StatelessWidget {
                         Image(
                           image: AssetImage('lib/images/icons/google.png'),
                           width: 47, // Ajusta el tamaño según sea necesario
-                          height: 24,
+                          height: 20,
                         ),
+                        
                         // Agrega un espacio entre la imagen y el texto
                         
                         // El texto que deseas agregar al botón
                         Center(
                           child: Text(
-                            'Iniciar sesión con Google   ',
+                            'Iniciar sesión con Google',
                             style: TextStyle(
                               // Define el estilo del texto según tus preferencias
-                              fontSize: 16,
+                              fontSize: 13,
                               color: Colors.black,
                               fontFamily: "Poppins-L"
                             ),
@@ -146,74 +155,45 @@ class LogAndSign extends StatelessWidget {
                       // ignore: avoid_print
                       print(credential);
                     },
+
+                    style: ElevatedButton.styleFrom(
+                      fixedSize: const Size(260, 30),
+                      elevation: 0 , 
+                      side: const BorderSide(color: Colors.black),
+                      
+                    ),
                     // Utiliza un Row para alinear la imagen y el texto horizontalmente
                     child: const Row(
                       children: [
                         // La imagen del botón
                         Image(
                           image: AssetImage('lib/images/icons/Apple.png'),
-                          width: 57, // Ajusta el tamaño según sea necesario
-                          height: 24,
+                          width: 47, // Ajusta el tamaño según sea necesario
+                          height: 20,
                         ),
                         // Agrega un espacio entre la imagen y el texto
                         
                         // El texto que deseas agregar al botón
                         Center(
                           child: Text(
-                            'Iniciar sesión con Apple    ',
+                            'Iniciar sesión con Apple',
                             style: TextStyle(
                               // Define el estilo del texto según tus preferencias
-                              fontSize: 16,
+                              fontSize: 13,
                               fontFamily: "Poppins-L",
                               color: Colors.black,
                             ),
                           ),
                         ),
+
+                       
                       ],
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 7),
-              Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      signInWithGoogle();
-                    },
-                    style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.white, // Define el color de fondo del botón
-                  ),
-                    // Utiliza un Row para alinear la imagen y el texto horizontalmente
-                    child: const Row(
-                      children: [
-                        // La imagen del botón
-                        Image(
-                          image: AssetImage('lib/images/icons/phone.png'),
-                          width: 57, // Ajusta el tamaño según sea necesario
-                          height: 24,
-                        ),
-                        // Agrega un espacio entre la imagen y el texto
-                       
-                        // El texto que deseas agregar al botón
-                        Center(
-                          child: Text(
-                            'Ingresar con tu móvil        ',
-                            style: TextStyle(
-                              // Define el estilo del texto según tus preferencias
-                              fontSize: 16,
-                              color: Colors.black,
-                              fontFamily: "Poppins-L"
-                            ),
-                          ),
-                        ),
-                      ],
-                    )
-                  )
               
-            ],
-          ),
         ]
         ),
         
