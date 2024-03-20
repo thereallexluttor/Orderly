@@ -49,6 +49,8 @@ dependencies:
   carousel_slider: ^4.2.1
   smooth_page_indicator: ^1.1.0
   simple_shadow: ^0.3.1
+  vibration: ^1.7.0
+  simple_barcode_scanner: ^0.1.1
  
   
 
@@ -85,6 +87,7 @@ flutter:
       - lib/images/icons/Apple.png
       - lib/images/icons/google.png
       - lib/images/logos/orderly_icon2.png
+      - lib/images/logos/orderly_icon3.png
       - lib/images/icons/phone.png
       - lib/images/logos/mascota.jpg
       - lib/images/animations/Animation.gif

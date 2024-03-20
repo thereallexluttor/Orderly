@@ -7,6 +7,7 @@ import 'package:flutter/widgets.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:orderly/Qr_scan/QR_page.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 
@@ -132,10 +133,17 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 50),
+              const SizedBox(height: 10),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  const Center(
+                     child: Image(
+                      image: AssetImage("lib/images/logos/orderly_icon3.png"),
+                      height: 50,
+                      width: 100,
+                    ),
+              ),
                   Center(
                     child: SizedBox(
                       width: 350,
@@ -162,17 +170,17 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   SizedBox(
                     height: 30,
                     child: Padding(
-                      padding: const EdgeInsets.only(right: 0.0),
+                      padding: const EdgeInsets.only(right: 10.0),
                       child: ListView(
                         scrollDirection: Axis.horizontal,
                         children: [
-                          const SizedBox(width: 20),
+                          const SizedBox(width: 35),
                           _buildButton(0, '🍔'),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 15),
                           _buildButton(1, '🍕'),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 15),
                           _buildButton(2, '🌮'),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 15),
                           _buildButton(3, '🍗'),
                         ],
                       ),
@@ -187,8 +195,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                       autoPlayCurve: Curves.fastOutSlowIn,
                       autoPlayAnimationDuration: const Duration(milliseconds: 800),
                       autoPlayInterval: const Duration(seconds: 4),
-                      enlargeCenterPage: true,
+                      enlargeCenterPage: false,
                       aspectRatio: 10.0,
+                      
                     ),
                     items: _sliderImages.map((imageUrl) {
                       return Builder(
@@ -210,7 +219,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                       dotHeight: 15,
                       dotWidth: 8,
                       spacing: 1,
-                      dotColor: Colors.white,
+                      dotColor: Color.fromARGB(255, 255, 255, 255),
                       activeDotColor:  Colors.white
                     ),
                   ),
@@ -233,36 +242,35 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               const SizedBox(height: 8),
 
               Center(
-               
-                  child: Container(
-                    height: MediaQuery.of(context).size.height - MediaQuery.of(context).size.height/1.15,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal, // Establecer el desplazamiento horizontal
-                      itemCount: _restaurantesParaTi.length,
-                      itemBuilder: (context, index) {
-                        final restauranteDoc = _restaurantesParaTi[index];
-                        final gpsPoint = restauranteDoc['gps_point'] as GeoPoint?;
-                        double distancia = 0.0;
-                
-                        if (gpsPoint != null && _currentPosition != null) {
-                          final distance = Geolocator.distanceBetween(
-                            _currentPosition!.latitude,
-                            _currentPosition!.longitude,
-                            gpsPoint.latitude,
-                            gpsPoint.longitude,
-                          );
-                          distancia = distance / 1000; // Convertir metros a kilómetros
-                        }
-                
-                        return Container(
-                          constraints: BoxConstraints(maxHeight: 20), // Establecer una altura máxima
-                          child: _buildRestauranteCard(restauranteDoc, gpsPoint, distancia),
-                        );
-                      },
-                    ),
-                  ),
-                
-              ),
+  child: SizedBox(
+    height: MediaQuery.of(context).size.height - MediaQuery.of(context).size.height / 1.17,
+    child: ListView.builder(
+      scrollDirection: Axis.horizontal,
+      itemCount: _restaurantesParaTi.length,
+      itemExtent: 330, // Altura fija de cada elemento
+      physics: const ClampingScrollPhysics(),
+      itemBuilder: (context, index) {
+        final restauranteDoc = _restaurantesParaTi[index];
+        final gpsPoint = restauranteDoc['gps_point'] as GeoPoint?;
+        double distancia = 0.0;
+
+        if (gpsPoint != null && _currentPosition != null) {
+          final distance = Geolocator.distanceBetween(
+            _currentPosition!.latitude,
+            _currentPosition!.longitude,
+            gpsPoint.latitude,
+            gpsPoint.longitude,
+          );
+          distancia = distance / 1000;
+        }
+
+        return _buildRestauranteCard(restauranteDoc, gpsPoint, distancia);
+      },
+    ),
+  ),
+),
+
+
 
               const SizedBox(height: 15),
               Visibility(
@@ -301,11 +309,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               Center(
   child: Visibility(
     visible: _searchController.text.isNotEmpty,
-    child: Container(
-      height: MediaQuery.of(context).size.height - MediaQuery.of(context).size.height/1.15,
+    child: SizedBox(
+      height: MediaQuery.of(context).size.height - MediaQuery.of(context).size.height/1.17,
       child: ListView.builder(
-        scrollDirection: Axis.horizontal, // Establecer el desplazamiento horizontal
-        shrinkWrap: true,
+        scrollDirection: Axis.horizontal,
         itemCount: _restaurantesFiltrados.length,
         itemBuilder: (context, index) {
           final restauranteDoc = _restaurantesFiltrados[index];
@@ -322,15 +329,19 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             distancia = distance / 1000; // Convertir metros a kilómetros
           }
           
-          return Container(
-            constraints: BoxConstraints(maxHeight: 20), // Establecer una altura máxima
-            child: _buildRestauranteCard(restauranteDoc, gpsPoint, distancia),
+          return SizedBox(
+            height: 150, // Altura fija de cada elemento
+            child: Container(
+              constraints: BoxConstraints(maxHeight: 20), // Establecer una altura máxima
+              child: _buildRestauranteCard(restauranteDoc, gpsPoint, distancia),
+            ),
           );
         },
       ),
     ),
   ),
 ),
+
             ],
           ),
         ),
@@ -339,7 +350,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           margin: const EdgeInsets.only(top: 0.0),
           child: FloatingActionButton(
             onPressed: () {
-              //QR-button
+             // Navegar a la página QR al presionar el botón flotante
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => QR_Scanner()),
+      );
             },
             backgroundColor: const Color.fromARGB(250, 255, 255, 255),
             foregroundColor: const Color(0xFFB747EB),
@@ -410,7 +425,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         });
       },
       style: ElevatedButton.styleFrom(
-        fixedSize: const Size(80, 30),
+        fixedSize: const Size(70, 30),
         elevation: 1,
         side: const BorderSide(color: Color.fromARGB(255, 236, 236, 236)),
         backgroundColor: isSelected ? Color.fromARGB(255, 205, 117, 249) : Colors.white,
@@ -418,7 +433,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       child: Text(
         text,
         style: TextStyle(
-          fontSize: 20,
+          fontSize: 17,
           color: isSelected ? Colors.white : const Color.fromARGB(255, 213, 213, 213),
           fontFamily: "Poppins-L",
         ),
@@ -440,12 +455,12 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           return Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(11),
               boxShadow: [
                 BoxShadow(
                   color: Colors.grey.withOpacity(0.5),
-                  spreadRadius: 0.5,
-                  blurRadius: 3,
+                  spreadRadius: 0.1,
+                  blurRadius: 1,
                   offset: const Offset(0,7),
                 ),
               ],
@@ -530,4 +545,3 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     );
   }
 }
-
