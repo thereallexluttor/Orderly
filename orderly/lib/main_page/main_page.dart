@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:orderly/Login_and_singup/log_and_sing.dart';
+import 'package:orderly/Login_and_singup/personal_data.dart';
 import 'package:orderly/main_page/home_page.dart';
 
 class FadePageRoute<T> extends PageRouteBuilder<T> {
@@ -44,7 +45,7 @@ class _MainPageState extends State<MainPage> {
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot)  {
           if (snapshot.hasData) {
-              return const HomePage();
+              return const datospersonales();
         } else {
           return LogAndSign();
         }

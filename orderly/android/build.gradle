@@ -1,5 +1,5 @@
 buildscript {
-    ext.kotlin_version = '1.9.21' // Esto es donde se define la versión de Kotlin Gradle plugin
+    ext.kotlin_version = '1.9.0' // Esto es donde se define la versión de Kotlin Gradle plugin
 
 }
 
